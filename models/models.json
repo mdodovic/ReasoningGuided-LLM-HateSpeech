@@ -1,0 +1,12 @@
+{
+    "qwen3": "qwen3:latest",
+    "qwen3.5": "qwen3.5:latest",
+    "qwen3.6": "qwen3.6:latest",
+    "mistral": "mistral:latest",
+    "phi3": "phi3:latest",
+    "phi4": "phi4:latest",
+    "granite4": "granite4:latest",
+    "gemma4": "gemma4:latest",
+    "llama3": "llama3:latest",
+    "llama4": "llama4:latest"
+}

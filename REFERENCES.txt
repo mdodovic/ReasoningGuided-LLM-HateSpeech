@@ -1,0 +1,99 @@
+REFERENCES
+[1] Z. Waseem and D. Hovy, “Hateful symbols or hateful people? predictive
+features for hate speech detection on twitter,” in Proceedings of the
+NAACL Student Research Workshop, 2016, pp. 88–93.
+[2] T. Davidson, D. Warmsley, M. Macy, and I. Weber, “Automated hate
+speech detection and the problem of offensive language,” in Proceedings
+of the International AAAI Conference on Web and Social Media, vol. 11,
+no. 1, 2017, pp. 512–515.
+[3] P. Badjatiya, S. Gupta, M. Gupta, and V. Varma, “Deep learning for hate
+speech detection in tweets,” in Proceedings of the WWW Companion,
+2017, pp. 759–760.
+[4] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “Bert: Pre-training
+of deep bidirectional transformers for language understanding,” in Pro-
+ceedings of NAACL-HLT, 2019, pp. 4171–4186.
+[5] T. Pires, E. Schlinger, and D. Garrette, “How multilingual is multilingual
+bert?” in Proceedings of ACL, 2019, pp. 4996–5001.
+[6] H. Miller, J. Thebault-Spieker, S. Chang, I. Johnson, L. Terveen, and
+B. Hecht, ““Blissfully Happy” or “Ready to Fight”: Varying Interpreta-
+tions of Emoji,” in Proceedings of ICWSM, 2016, pp. 259–268.
+[7] F. Barbieri, J. Camacho-Collados, L. Espinosa-Anke, and L. Neves,
+“Tweeteval: Unified benchmark and comparative evaluation for tweet
+classification,” in Findings of EMNLP, 2020, pp. 1644–1650.
+[8] A. A. M. Shoeb and G. de Melo, “Emotag1200: Understanding the
+association between emojis and emotions,” in Proceedings of EMNLP,
+2020, pp. 8957–8967.
+[9] B. Felbo, A. Mislove, A. Søgaard, I. Rahwan, and S. Lehmann, “Using
+millions of emoji occurrences to learn any-domain representations for
+detecting sentiment, emotion and sarcasm,” in Proceedings of EMNLP,
+2017, pp. 1615–1625.
+[10] H. R. Kirk, B. Vidgen, and P. R¨ottger, “Hatemoji: A test suite and
+adversarially-generated dataset for benchmarking and detecting emoji-
+based hate,” in Proceedings of NAACL, 2022, pp. 1352–1368.
+[11] A. Schmidt and M. Wiegand, “A survey on hate speech detection
+using natural language processing,” in Proceedings of the SocialNLP
+Workshop, 2017, pp. 1–10.
+[12] F. Huang, H. Kwak, and J. An, “Is chatgpt better than human annotators?
+potential and limitations of chatgpt in explaining implicit hate speech,”
+in Proceedings of the WWW Companion, 2023, pp. 294–297.
+[13] P. R¨ottger, B. Vidgen, D. Nguyen, Z. Waseem, H. Margetts, and
+J. Pierrehumbert, “Hatecheck: Functional tests for hate speech detection
+models,” in Proceedings of ACL-IJCNLP, 2021, pp. 41–58.
+[14] K.-L. Chiu, A. Collins, and R. Alexander, “Detecting hate speech with
+gpt-3,” 2022.
+[15] N. Ljubeˇsi´c, D. Fiˇser, and T. Erjavec, “The frenk datasets of socially
+unacceptable discourse in slovene and english,” in Proceedings of TSD,
+2019, pp. 103–114.
+[16] T. Mandl et al., “Overview of the hasoc track at fire 2019: Hate speech
+and offensive content identification in indo-european languages,” in
+Proceedings of FIRE, 2019, pp. 14–17.
+[17] M. Dodovi´c, N. Stankovi´c, J. Tufegdˇzi´c, L. Hrvaˇcevi´c, and D. Draˇskovi´c,
+“From toxic to neutral: Automatic hate speech rewriting using llms,” in
+Proceedings of the 34th International Electrotechnical and Computer
+Science Conference (ERK), Portoroˇz, Slovenia, Sep. 2025, pp. 421–426.
+[18] U. Radenkovi´c, J. Cincovi´c, A. Milakovi´c, M. Mi´covi´c, M. Dodovi´c,
+V. Jocovi´c, and D. Draˇskovi´c, “Can large language models replace
+human annotators? a study on hate speech detection in serbian,” in
+Proceedings of the 34th International Electrotechnical and Computer
+Science Conference (ERK), Portoroˇz, Slovenia, Sep. 2025, pp. 409–414.
+[19] J. Tufegdˇzi´c, L. Hrvaˇcevi´c, M. Dodovi´c, N. Stankovi´c, and D. Draˇskovi´c,
+“Llm-driven hate speech detection in news content extracted from urls,”
+in Proceedings of the 34th International Electrotechnical and Computer
+Science Conference (ERK), Portoroˇz, Slovenia, Sep. 2025, pp. 415–420.
+[20] F. S. Marcondes, A. Gala, R. Magalh˜aes, F. Perez de Britto, D. Dur˜aes,
+and P. Novais, “Using ollama,” in Natural Language Analytics with
+Generative Large-Language Models: A Practical Approach with Ollama
+and Open-Source LLMs. Cham, Switzerland: Springer, 2025, pp. 23–
+35.
+[21] A. Grattafiori, A. Dubey, A. Jauhri, A. Pandey, A. K. Al-Dahle,
+A. Letman et al., “The llama 3 herd of models,” 2024, accessed:
+2026-04-24. [Online]. Available: https://arxiv.org/abs/2407.21783
+[22] Mistral AI, “Mistral 7B,” https://mistral.ai/news/announcing-mistral-7b,
+accessed: 2026-04-24.
+[23] M. Abdin, J. Aneja, H. Behl, S. Bubeck, R. Eldan, S. Gunasekar
+et al., “Phi-3 technical report: A highly capable language model locally
+on your phone,” 2024, accessed: 2026-04-24. [Online]. Available:
+https://arxiv.org/abs/2404.14219
+[24] M. Abdin, S. Bubeck, R. Eldan, S. Gunasekar, S. Harrison et al., “Phi-4
+technical report,” 2024, accessed: 2026-04-24. [Online]. Available:
+https://arxiv.org/abs/2412.08905
+[25] Qwen Team, “Qwen3 technical report,” 2025, accessed: 2026-04-24.
+[Online]. Available: https://arxiv.org/abs/2505.09388
+[26] Alibaba Cloud Qwen Team, “Qwen3.5-9b (ollama version),”
+https://ollama.com/library/qwen3.5, 2025, accessed: 2026-04-24.
+[27] Google DeepMind, “Gemma 3 technical report,” 2025, accessed:
+2026-04-24. [Online]. Available: https://arxiv.org/abs/2503.19786
+[28] M. Mishra, M. Stallone, G. Zhang, Y. Shen, A. Prasad, A. M. Soria,
+M. Merler, P. Selvam, S. Surendran, S. Singh et al., “Granite code
+models: A family of open foundation models for code intelligence,”
+arXiv preprint arXiv:2405.04324, 2024.
+[29] P. Liu, W. Yuan, J. Fu, Z. Jiang, H. Hayashi, and G. Neubig, “Pre-
+train, prompt, and predict: A systematic survey of prompting methods
+in natural language processing,” ACM computing surveys, vol. 55, no. 9,
+pp. 1–35, 2023.
+[30] H. Dang, L. Mecke, F. Lehmann, S. Goller, and D. Buschek, “How
+to prompt? opportunities and challenges of zero-and few-shot learning
+for human-ai interaction in creative applications of generative models,”
+arXiv preprint arXiv:2209.01390, 2022.
+[31] J. Cohen, “A coefficient of agreement for nominal scales,” Educational
+and Psychological Measurement, vol. 20, no. 1, pp. 37–46, 1960.
