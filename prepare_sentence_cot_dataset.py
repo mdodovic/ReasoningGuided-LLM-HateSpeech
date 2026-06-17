@@ -1,4 +1,4 @@
-"""Prepare the fixed-sentence paragraph-context dataset from legacy workbooks."""
+"""Prepare the fixed-sentence sentence-CoT dataset from legacy workbooks."""
 
 from pathlib import Path
 
@@ -9,7 +9,7 @@ from src.utils import parse_gt_codes_for_sentence
 REPO_ROOT = Path(__file__).resolve().parent
 PARAGRAPHS_PATH = REPO_ROOT / "data" / "paragraph_hate_speech_no_offenses.xlsx"
 SENTENCES_PATH = REPO_ROOT / "data" / "single_sentence_hate_speech_no_offenses.xlsx"
-OUTPUT_PATH = REPO_ROOT / "data" / "paragraph_context_dataset.xlsx"
+OUTPUT_PATH = REPO_ROOT / "data" / "sentence_cot_dataset.xlsx"
 
 
 def _format_sentence_category(value) -> str:
@@ -57,7 +57,7 @@ def prepare(paragraphs_path: str, sentences_path: str, output: str) -> None:
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows, columns=["ID", "Text", "Sentences", "Category"]).to_excel(
-        output_path, index=False, sheet_name="ParagraphContext"
+        output_path, index=False, sheet_name="SentenceCot"
     )
     print(f"Joined {len(rows)} paragraphs with {len(sentences)} fixed sentences: {output_path}")
 

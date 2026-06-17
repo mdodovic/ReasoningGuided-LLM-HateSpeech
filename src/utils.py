@@ -62,8 +62,8 @@ def split_sentences_column(value: str) -> List[str]:
     return [part.strip() for part in re.split(r"\r?\n+", raw) if part.strip()]
 
 
-def load_paragraph_context_dataset(filepath: str) -> List[Dict]:
-    """Load paragraphs, fixed sentences, and sentence-aligned ground truth."""
+def load_sentence_cot_dataset(filepath: str) -> List[Dict]:
+    """Load grouped fixed sentences and sentence-aligned ground truth."""
     df = pd.read_excel(filepath)
     required_columns = {"Text", "Sentences", "Category"}
     missing_columns = required_columns - set(df.columns)

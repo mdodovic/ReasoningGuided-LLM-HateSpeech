@@ -6,7 +6,7 @@ from collections import Counter
 
 import pandas as pd
 
-from paragraph_context_run import (
+from sentence_cot_run import (
     DATASET_PATH,
     MODELS_PATH,
     REPO_ROOT,
@@ -16,9 +16,9 @@ from paragraph_context_run import (
 )
 from src.categories import get_category_prompt
 from src.llm_detector import LLMDetector
-from src.utils import build_model_tags, load_paragraph_context_dataset
+from src.utils import build_model_tags, load_sentence_cot_dataset
 
-OUTPUT_PATH = REPO_ROOT / "results" / "paragraph_context_ensemble.xlsx"
+OUTPUT_PATH = REPO_ROOT / "results" / "sentence_cot_ensemble.xlsx"
 
 
 def _vote(predictions: list[dict], sentence_id: int) -> dict | None:
@@ -46,7 +46,7 @@ def main() -> None:
         help="Number of paragraphs to process for testing; omitted means all paragraphs",
     )
     args = parser.parse_args()
-    records = load_paragraph_context_dataset(str(DATASET_PATH))
+    records = load_sentence_cot_dataset(str(DATASET_PATH))
     if args.debug is not None and args.debug > 0:
         records = records[:args.debug]
     model_tags = build_model_tags(models_json_path=str(MODELS_PATH))
@@ -59,8 +59,8 @@ def main() -> None:
         model_results = []
         for model_name, detector in detectors.items():
             call_started = time.perf_counter()
-            result = detector.classify_sentences_with_paragraph_context(
-                record["text"], record["sentences"], categories_prompt
+            result = detector.classify_sentences_cot(
+                record["sentences"], categories_prompt
             )
             call_elapsed = time.perf_counter() - call_started
             result["elapsed_seconds"] = call_elapsed

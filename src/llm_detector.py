@@ -434,7 +434,7 @@ class LLMDetector:
 
         raise ValueError(f"Expected one category code, received: {cleaned[:120]}")
 
-    def _normalize_paragraph_context_code(self, code: str, expected_id: int) -> dict:
+    def _normalize_sentence_code(self, code: str, expected_id: int) -> dict:
         code = str(code).strip().lower()
         if not re.fullmatch(r"[0-7][a-z]?", code):
             raise ValueError(f"Invalid category code: {code}")
@@ -448,17 +448,15 @@ class LLMDetector:
             "codes": codes,
         }
 
-    def classify_sentence_with_paragraph_context(
-        self, paragraph: str, sentence: str, sentence_id: int, categories_prompt: str
+    def classify_sentence_cot(
+        self, sentence: str, sentence_id: int, categories_prompt: str
     ) -> dict:
-        """Classify one caller-provided sentence while using the paragraph as context."""
-        prompt_path = self.prompts_dir / "classify_sentences_with_paragraph_context.txt"
+        """Classify one caller-provided sentence with a sentence-only CoT prompt."""
+        prompt_path = self.prompts_dir / "classify_sentence_cot.txt"
         with open(prompt_path, encoding="utf-8") as f:
             prompt_template = f.read().strip()
         prompt = prompt_template.format(
             categories_prompt=categories_prompt,
-            paragraph=paragraph,
-            sentence_id=sentence_id,
             sentence=sentence,
         )
         response = self.generate_response(
@@ -468,25 +466,25 @@ class LLMDetector:
         )
         try:
             code = self._category_code_from_plain_response(response, sentence_id)
-            normalized = self._normalize_paragraph_context_code(code, sentence_id)
+            normalized = self._normalize_sentence_code(code, sentence_id)
             return {
-                "paragraph_has_hate_speech": normalized["has_hate_speech"],
+                "has_hate_speech": normalized["has_hate_speech"],
                 "sentences": [normalized],
                 "raw": response,
             }
         except (TypeError, ValueError, KeyError) as exc:
             return {"sentences": [], "raw": response, "parse_error": str(exc)}
 
-    def classify_sentences_with_paragraph_context(
-        self, paragraph: str, sentences: list[str], categories_prompt: str
+    def classify_sentences_cot(
+        self, sentences: list[str], categories_prompt: str
     ) -> dict:
-        """Classify fixed sentence IDs one model call at a time, preserving legacy output shape."""
+        """Classify fixed sentences one model call at a time, preserving the runner output shape."""
         normalized = []
         raw_outputs = []
         sentence_errors = []
         for sentence_id, sentence in enumerate(sentences, start=1):
-            result = self.classify_sentence_with_paragraph_context(
-                paragraph, sentence, sentence_id, categories_prompt
+            result = self.classify_sentence_cot(
+                sentence, sentence_id, categories_prompt
             )
             raw_line = f"{sentence_id}: {result.get('raw', '')}"
             if result.get("parse_error"):
@@ -501,7 +499,7 @@ class LLMDetector:
             normalized.extend(result.get("sentences", []))
 
         return {
-            "paragraph_has_hate_speech": any(item["has_hate_speech"] for item in normalized),
+            "has_hate_speech": any(item["has_hate_speech"] for item in normalized),
             "sentences": normalized,
             "raw": "\n".join(raw_outputs),
             "sentence_parse_errors": sentence_errors,

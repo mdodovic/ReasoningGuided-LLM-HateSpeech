@@ -1,4 +1,4 @@
-"""Calculate statistics from completed paragraph-context inference results."""
+"""Calculate statistics from completed sentence-CoT inference results."""
 
 from pathlib import Path
 
@@ -7,14 +7,14 @@ import pandas as pd
 from src.statistical_analysis import model_statistics, pairwise_mcnemar, summary_statistics
 
 REPO_ROOT = Path(__file__).resolve().parent
-INPUT_PATH = REPO_ROOT / "results" / "paragraph_context_comparison.xlsx"
-OUTPUT_PATH = REPO_ROOT / "results" / "paragraph_context_statistics.xlsx"
+INPUT_PATH = REPO_ROOT / "results" / "sentence_cot_comparison.xlsx"
+OUTPUT_PATH = REPO_ROOT / "results" / "sentence_cot_statistics.xlsx"
 
 
 def main() -> None:
     if not INPUT_PATH.exists():
         raise FileNotFoundError(
-            f"Inference results not found: {INPUT_PATH}. Run paragraph_context_run.py first."
+            f"Inference results not found: {INPUT_PATH}. Run sentence_cot_run.py first."
         )
     rows = pd.read_excel(INPUT_PATH, sheet_name="PerSentence").to_dict("records")
     summary_rows = summary_statistics(rows)

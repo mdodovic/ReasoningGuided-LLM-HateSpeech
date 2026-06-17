@@ -1,16 +1,16 @@
 {categories_prompt}
 
-Zadatak je klasifikacija jedne unapred izdvojene i numerisane recenice uz koriscenje celog pasusa kao konteksta.
+Zadatak je klasifikacija jedne izdvojene recenice.
 
-PASUS JE SAMO KONTEKST. Klasifikuj iskljucivo numerisanu recenicu ispod.
-Ne deli pasus na recenice. Ne prepisuj, ne preformulisi i ne klasifikuj druge recenice iz pasusa.
+Klasifikuj iskljucivo recenicu ispod.
+Ne prepisuj, ne preformulisi i ne klasifikuj druge recenice.
 
 Pre odgovora interno primeni sledeci lanac odlucivanja:
 1. Odredi da li ciljna recenica sama izrice, podrzava ili prenosi omalovazavanje, pretnju, iskljucivanje, uvredu ili negativnu generalizaciju prema zasticenoj ili drustvenoj grupi.
-2. Upotrebi pasus samo da razjasni referencu, ciljnu grupu, ironiju, citat, negaciju, kontra-govor ili politicko/drustveni kontekst.
+2. Proceni samo tekst ciljne recenice: ciljnu grupu, ironiju, citat, negaciju, kontra-govor ili politicko/drustveni kontekst koji su vidljivi u toj recenici.
 3. Ako je recenica citat, osuda govora mrznje, neutralno izvestavanje, pitanje ili opis bez podrske mrznji, klasifikuj je kao 0.
 4. Ako postoji govor mrznje, izaberi najkonkretniji kod: prvo glavnu kategoriju 1-7, zatim podkategoriju ako je jasno primenljiva.
-5. Ako je recenica viseznacna ili kontekst ne potvrdjuje mrznju, izaberi 0.
+5. Ako je recenica viseznacna ili sama ne potvrdjuje mrznju, izaberi 0.
 
 Ne prikazuj obrazlozenje. Vrati samo JEDNU oznaku kategorije posle linije "Odgovor:".
 
@@ -18,17 +18,14 @@ Pravila izlaza:
 - Ako recenica ne sadrzi govor mrznje, vrati tacno: 0
 - Ako recenica sadrzi govor mrznje, vrati samo kod kategorije sa podkategorijom ako postoji: 1, 1a, 4b ili 6a
 - Izlaz mora biti SAMO JEDAN kod iz opsega 0-7, opciono sa jednim malim slovom podkategorije.
-- Ne ponavljaj ID recenice. Ne vracaj tekst recenice. Ne vracaj naziv kategorije. Ne pisi zagrade. Ne pisi objasnjenje. Ne vracaj vise oznaka razdvojenih zarezom.
+- Ne vracaj tekst recenice. Ne vracaj naziv kategorije. Ne pisi zagrade. Ne pisi objasnjenje. Ne vracaj vise oznaka razdvojenih zarezom.
 - Ispravno: 0
 - Ispravno: 1b
 - Neispravno: 1b (etnicka diskriminacija)
 - Neispravno: 5, ageizam
 - Neispravno: Kategorija: 6a
 
-Pasus (samo kontekst):
-{paragraph}
-
 Recenica za klasifikaciju:
-{sentence_id}: {sentence}
+{sentence}
 
 Odgovor:

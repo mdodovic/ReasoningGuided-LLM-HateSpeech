@@ -1,4 +1,4 @@
-"""Statistical summaries for paired paragraph-context predictions."""
+"""Statistical summaries for paired sentence-CoT predictions."""
 
 from itertools import combinations
 
@@ -16,32 +16,25 @@ CORRECTNESS_COLUMNS = {
 
 
 def summary_statistics(sentence_rows: list[dict]) -> list[dict]:
-    """Calculate post-hoc performance and runtime summaries by model."""
+    """Calculate post-hoc performance summaries by model."""
     df = pd.DataFrame(sentence_rows)
     if df.empty:
         return []
     output = []
     for model, model_df in df.groupby("model", sort=False):
         valid = model_df[model_df["prediction_valid"] == True].copy()  # noqa: E712
-        paragraph_times = model_df.groupby("paragraph_id")["paragraph_seconds"].first().dropna().astype(float)
         row = {
             "model": model,
-            "sentences_total": len(model_df),
-            "sentences_valid": len(valid),
-            "sentences_invalid": len(model_df) - len(valid),
+            "invalid_prediction_rate": (len(model_df) - len(valid)) / len(model_df) if len(model_df) else None,
             "binary_accuracy": valid["binary_correct"].astype(float).mean() if not valid.empty else None,
             "category_accuracy": valid["category_correct"].astype(float).mean() if not valid.empty else None,
             "full_code_accuracy": valid["full_code_correct"].astype(float).mean() if not valid.empty else None,
-            "total_inference_seconds": paragraph_times.sum() if not paragraph_times.empty else None,
-            "mean_seconds_per_paragraph": paragraph_times.mean() if not paragraph_times.empty else None,
-            "median_seconds_per_paragraph": paragraph_times.median() if not paragraph_times.empty else None,
-            "standard_deviation_seconds_per_paragraph": paragraph_times.std(ddof=1) if len(paragraph_times) > 1 else 0.0,
         }
         if not valid.empty:
-            binary_true = valid["gt_has_hate_speech"].astype(int)
-            binary_pred = valid["pred_has_hate_speech"].astype(int)
-            category_true = valid["gt_category"].astype(int)
-            category_pred = valid["pred_category"].astype(int)
+            binary_true = (valid["gt_code"].astype(str) != "0").astype(int)
+            binary_pred = (valid["pred_code"].astype(str) != "0").astype(int)
+            category_true = valid["gt_code"].astype(str).str[0].astype(int)
+            category_pred = valid["pred_code"].astype(str).str[0].astype(int)
             row.update({
                 "binary_precision": precision_score(binary_true, binary_pred, zero_division=0),
                 "binary_recall": recall_score(binary_true, binary_pred, zero_division=0),
@@ -52,6 +45,8 @@ def summary_statistics(sentence_rows: list[dict]) -> list[dict]:
                     else (binary_true == binary_pred).mean()
                 ),
                 "category_macro_f1": f1_score(category_true, category_pred, average="macro", zero_division=0),
+                "binary_false_positive_rate": ((binary_true == 0) & (binary_pred == 1)).sum() / (binary_true == 0).sum() if (binary_true == 0).sum() else None,
+                "binary_false_negative_rate": ((binary_true == 1) & (binary_pred == 0)).sum() / (binary_true == 1).sum() if (binary_true == 1).sum() else None,
             })
         output.append(row)
     return output
@@ -92,7 +87,6 @@ def model_statistics(
                 "bootstrap_95_ci_high": ci_high,
                 "bootstrap_95_ci_half_width": (ci_high - ci_low) / 2,
                 "bootstrap_iterations": bootstrap_iterations,
-                "valid_sentences": len(task_df),
                 "valid_paragraphs": len(paragraph_scores),
             })
     return output
@@ -139,7 +133,6 @@ def pairwise_mcnemar(sentence_rows: list[dict]) -> list[dict]:
                 "model_a": model_a,
                 "model_b": model_b,
                 "task": task,
-                "common_valid_sentences": len(paired),
                 "model_a_accuracy": a_correct.mean(),
                 "model_b_accuracy": b_correct.mean(),
                 "accuracy_difference_a_minus_b": a_correct.mean() - b_correct.mean(),

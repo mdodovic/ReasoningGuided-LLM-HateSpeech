@@ -1,4 +1,4 @@
-"""Evaluate models on fixed sentence IDs with paragraph context."""
+"""Evaluate models on fixed sentences with sentence-only CoT."""
 
 import argparse
 import json
@@ -9,12 +9,12 @@ import pandas as pd
 
 from src.categories import get_category_prompt
 from src.llm_detector import LLMDetector
-from src.utils import build_model_tags, load_paragraph_context_dataset, parse_category_and_subcategory
+from src.utils import build_model_tags, load_sentence_cot_dataset, parse_category_and_subcategory
 
 REPO_ROOT = Path(__file__).resolve().parent
-DATASET_PATH = REPO_ROOT / "data" / "paragraph_context_dataset.xlsx"
+DATASET_PATH = REPO_ROOT / "data" / "sentence_cot_dataset.xlsx"
 MODELS_PATH = REPO_ROOT / "models" / "models.json"
-OUTPUT_PATH = REPO_ROOT / "results" / "paragraph_context_comparison.xlsx"
+OUTPUT_PATH = REPO_ROOT / "results" / "sentence_cot_comparison.xlsx"
 
 
 def print_result_status(
@@ -63,23 +63,22 @@ def metric_row(model: str, rows: list[dict], elapsed: float, calls: int) -> dict
     ratio = lambda count, denominator: count / denominator if denominator else None
     return {
         "model": model,
-        "sentences_total": len(rows),
-        "sentences_valid": total,
-        "sentences_invalid": len(rows) - total,
-        "llm_calls": calls,
+        "invalid_prediction_rate": (len(rows) - total) / len(rows) if rows else None,
         "total_seconds": elapsed,
         "average_seconds_per_llm_call": elapsed / calls if calls else None,
         "average_seconds_per_sentence": elapsed / len(rows) if rows else None,
         "binary_accuracy": ratio(sum(r["binary_correct"] for r in valid_rows), total),
         "category_accuracy": ratio(sum(r["category_correct"] for r in valid_rows), total),
         "subcategory_full_code_accuracy": ratio(sum(r["full_code_correct"] for r in valid_rows), total),
+        "binary_false_positive_rate": ratio(sum((r["gt_code"] == "0") and (r["pred_code"] != "0") for r in valid_rows), sum(r["gt_code"] == "0" for r in valid_rows)),
+        "binary_false_negative_rate": ratio(sum((r["gt_code"] != "0") and (r["pred_code"] == "0") for r in valid_rows), sum(r["gt_code"] != "0" for r in valid_rows)),
     }
 
 
-def evaluate_predictions(model: str, records: list[dict], paragraph_predictions: list[dict]) -> list[dict]:
+def evaluate_predictions(model: str, records: list[dict], group_predictions: list[dict]) -> list[dict]:
     rows = []
-    for paragraph_index, (record, result) in enumerate(zip(records, paragraph_predictions), start=1):
-        paragraph_id = record.get("id", paragraph_index)
+    for group_index, (record, result) in enumerate(zip(records, group_predictions), start=1):
+        paragraph_id = record.get("id", group_index)
         predictions = result.get("sentences", []) if isinstance(result, dict) else []
         sentence_errors = {
             item.get("id"): item.get("parse_error", "")
@@ -89,21 +88,18 @@ def evaluate_predictions(model: str, records: list[dict], paragraph_predictions:
         for sentence_id, (sentence, gt_codes) in enumerate(zip(record["sentences"], record["gt_codes"]), start=1):
             pred = _prediction_for_id(predictions, sentence_id)
             sentence_parse_error = sentence_errors.get(sentence_id, "")
-            gt_cat, gt_sub, gt_primary = _primary(gt_codes)
+            gt_cat, _, gt_primary = _primary(gt_codes)
             gt_has_hate = any(code != "0" for code in gt_codes)
             prediction_valid = pred is not None and not result.get("parse_error") and not sentence_parse_error
             if prediction_valid:
                 pred_codes = pred.get("codes") or ["0"]
-                pred_cat, pred_sub, pred_primary = _primary(pred_codes)
+                pred_cat, _, pred_primary = _primary(pred_codes)
                 pred_has_hate = bool(pred.get("has_hate_speech", pred_cat != 0))
                 binary_correct = gt_has_hate == pred_has_hate
                 category_correct = gt_cat == pred_cat
                 full_code_correct = gt_primary == pred_primary
             else:
-                pred_codes = []
-                pred_has_hate = None
-                pred_cat = None
-                pred_sub = None
+                pred_primary = None
                 binary_correct = None
                 category_correct = None
                 full_code_correct = None
@@ -112,16 +108,9 @@ def evaluate_predictions(model: str, records: list[dict], paragraph_predictions:
                 "paragraph_id": paragraph_id,
                 "sentence_id": sentence_id,
                 "sentence": sentence,
-                "paragraph_seconds": result.get("elapsed_seconds"),
                 "prediction_valid": prediction_valid,
-                "gt_has_hate_speech": gt_has_hate,
-                "pred_has_hate_speech": pred_has_hate,
-                "gt_category": gt_cat,
-                "pred_category": pred_cat,
-                "gt_subcategory": gt_sub,
-                "pred_subcategory": pred_sub,
-                "gt_codes": ",".join(gt_codes),
-                "pred_codes": ",".join(pred_codes),
+                "gt_code": gt_primary,
+                "pred_code": pred_primary if prediction_valid else None,
                 "binary_correct": binary_correct,
                 "category_correct": category_correct,
                 "full_code_correct": full_code_correct,
@@ -131,7 +120,7 @@ def evaluate_predictions(model: str, records: list[dict], paragraph_predictions:
 
 
 def run(debug: int | None = None, save_raw: bool = False) -> None:
-    records = load_paragraph_context_dataset(str(DATASET_PATH))
+    records = load_sentence_cot_dataset(str(DATASET_PATH))
     if debug is not None and debug > 0:
         records = records[:debug]
     categories_prompt = get_category_prompt()
@@ -149,8 +138,8 @@ def run(debug: int | None = None, save_raw: bool = False) -> None:
         started = time.perf_counter()
         for paragraph_id, record in enumerate(records, start=1):
             call_started = time.perf_counter()
-            result = detector.classify_sentences_with_paragraph_context(
-                record["text"], record["sentences"], categories_prompt
+            result = detector.classify_sentences_cot(
+                record["sentences"], categories_prompt
             )
             result["elapsed_seconds"] = time.perf_counter() - call_started
             results.append(result)
@@ -171,7 +160,6 @@ def run(debug: int | None = None, save_raw: bool = False) -> None:
                     "elapsed_seconds": result["elapsed_seconds"],
                     "raw": result.get("raw", ""),
                     "parse_error": result.get("parse_error", "") or json.dumps(result.get("sentence_parse_errors", []), ensure_ascii=False),
-                    "normalized": json.dumps(result.get("sentences", []), ensure_ascii=False),
                 })
         elapsed = time.perf_counter() - started
         model_sentence_rows = evaluate_predictions(model_name, records, results)
