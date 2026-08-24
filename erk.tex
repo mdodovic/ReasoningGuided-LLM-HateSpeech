@@ -1,0 +1,210 @@
+\documentclass[a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{erk}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[top=22.5mm, bottom=22.5mm, left=22.5mm, right=22.5mm]{geometry}
+
+\usepackage[slovene,english]{babel}
+
+% local definitions
+\def\footnotemark{}%  to avoid footnote on cover page
+
+\begin{document}
+%make title
+\title{Improving Hate Speech Classification Using Reasoning-Guided Large Language Models}
+
+\author{
+Janko Tufegdžić, Matija Dodović, Uroš Radenković,\\
+Marko Mišić, Dražen Drašković
+}
+
+\affiliation{
+School of Electrical Engineering, University of Belgrade\\
+Belgrade, Serbia
+}
+
+\email{
+E-mail: \{janko, mdodovic, uros.radenkovic,\\
+marko.misic, drazen.draskovic\}@etf.bg.ac.rs
+}
+
+\maketitle
+
+%\thispagestyle{empty}
+
+\begin{abstract}{Abstract}
+Hate speech detection in low-resource languages remains challenging due to limited annotated datasets, language-specific context, and the difficulty of distinguishing hateful content from offensive, ambiguous, quoted, or counter-speech expressions. This paper investigates reasoning-guided prompting for sentence-level hate speech classification in Serbian using open-source large language models. The proposed approach instructs models to internally follow a structured decision process based on hate speech definitions, target groups, linguistic cues, and contextual factors, while returning only a final category code suitable for automatic evaluation. The models are evaluated on binary hate speech detection, main-category classification, and fine-grained subcategory classification. Experimental results show that reasoning-guided prompting produces valid and structured outputs across different model families, but performance varies substantially depending on the task. Phi-4 achieves the highest binary accuracy, Qwen3.5 obtains the best category and subcategory accuracy, and Gemma 4 provides the strongest balance between precision and recall. The results confirm that fine-grained hate speech classification is considerably more difficult than binary detection and that strong binary performance does not necessarily imply reliable categorization. These findings highlight the importance of task-specific model selection and reasoning-guided evaluation for hate speech classification in low-resource language settings.
+\end{abstract}
+
+\section{Introduction}
+Online hate speech detection is an important but challenging task in natural language processing. Harmful content is often short, context-dependent, implicit, sarcastic, or expressed through culturally specific language. Previous work has shown that hate speech must be distinguished from general offensive language, since offensive content does not always target protected or social groups, while hate speech may appear in indirect forms \cite{waseem2016hateful,davidson2017automated,schmidt2017survey}.
+
+Large language models (LLMs) offer new possibilities for hate speech classification because they can follow task instructions, use category definitions, and perform zero-shot or few-shot reasoning without task-specific fine-tuning. Prior studies have explored GPT-style models and ChatGPT for hate speech detection and explanation \cite{chiu2022detecting,huang2023chatgpt}, while prompting has become a widely used approach for adapting language models to downstream NLP tasks \cite{liu2023pre,dang2022prompt}. However, the reliability of LLMs remains uncertain when models must separate hate speech from neutral reporting, quotation, counter-speech, or ambiguous language.
+
+In this paper, we investigate reasoning-guided prompting for Serbian hate speech classification. The model is instructed to internally follow a structured decision process before returning only the final category code. This allows the system to benefit from reasoning-oriented prompting while preserving a simple classification output. We evaluate multiple open-source LLMs on sentence-level hate speech classification, including binary detection, main category prediction, and fine-grained subcategory classification.
+The main contributions of this paper are threefold:
+
+\begin{itemize}
+    \item A sentence-level reasoning-guided prompting framework for Serbian hate speech classification.
+    \item A comparative evaluation of open-source LLMs across binary, category-level, and subcategory-level tasks.
+    \item An error-oriented analysis of model strengths and limitations in socially sensitive text classification.
+\end{itemize}
+
+The remainder of this paper is organized as follows. Section II reviews related work on hate speech detection, large language models, prompting strategies, fine-grained evaluation, Serbian hate speech classification, and open-source LLMs. Section III presents the proposed methodology, including dataset preparation, the label scheme, reasoning-guided prompting, model inference, and evaluation metrics. Section IV reports and discusses the experimental results for binary hate speech detection, category-level classification, and full-code subcategory classification. Finally, Section V concludes the paper and outlines directions for future work.
+
+\section{Related Work}
+
+\subsection{Hate Speech Detection}
+
+Automatic hate speech detection has been widely studied in natural language processing, particularly in social media contexts where harmful content is frequent, short, and linguistically noisy. Early work focused on identifying predictive features for hateful and abusive language in Twitter data \cite{waseem2016hateful}, while Davidson et al. \cite{davidson2017automated} emphasized the important distinction between hate speech and offensive language. This distinction is central to hate speech classification, since not all offensive content targets protected or social groups, and not all hateful content is expressed through explicit slurs. Schmidt and Wiegand \cite{schmidt2017survey} provide a broader survey of NLP approaches to hate speech detection, highlighting challenges such as implicit hate, annotation disagreement, and domain dependence.
+
+Deep learning methods later became dominant in hate speech detection. Badjatiya et al. \cite{badjatiya2017deep} demonstrated the use of neural models for hate speech detection in tweets, while transformer-based language models such as BERT \cite{devlin2019bert} enabled stronger contextual representations for text classification. In multilingual settings, models such as multilingual BERT have been used to transfer representations across languages \cite{pires2019multilingual}, which is particularly relevant for hate speech detection in languages with fewer labeled resources. Benchmarking efforts such as TweetEval \cite{barbieri2020tweeteval} further supported systematic comparison across tweet classification tasks, including offensive and harmful content detection.
+
+\subsection{LLMs and Prompting for Hate Speech Classification}
+
+The emergence of large language models has introduced a new paradigm for hate speech detection. Instead of relying only on supervised training, LLMs can perform classification through task instructions, category definitions, and few-shot examples. Chiu et al. \cite{chiu2022detecting} investigated GPT-3 for hate speech detection, showing the potential of generative models for moderation-related tasks. Huang et al. \cite{huang2023chatgpt} studied ChatGPT in the context of implicit hate speech explanation, suggesting that LLMs can provide useful reasoning but may still be limited by inconsistency and sensitivity to prompt formulation.
+
+Prompting has become a central method for adapting language models to downstream NLP tasks. Liu et al. \cite{liu2023pre} survey the broader ``pre-train, prompt, and predict'' paradigm, while Dang et al. \cite{dang2022prompt} discuss opportunities and challenges of zero-shot and few-shot prompting. These studies indicate that prompt design can substantially affect model behavior. In hate speech detection, this is especially important because models must separate hateful intent from quotation, counter-speech, neutral reporting, humor, sarcasm, and general offensiveness. Our work follows this direction by using reasoning-guided prompting to structure the model's internal decision process before producing a final category label.
+
+\subsection{Evaluation Challenges and Fine-Grained Hate Speech Categories}
+
+A major challenge in hate speech detection is robust evaluation. Röttger et al. \cite{rottger2021hatecheck} introduced HateCheck, a functional test suite designed to evaluate specific model capabilities and weaknesses in hate speech detection. Such work shows that aggregate accuracy alone may hide important failure modes, especially when models struggle with negation, reclaimed language, counter-speech, or implicit attacks. For this reason, fine-grained evaluation is important: models should be assessed not only on binary hate speech detection, but also on whether they assign the correct target category or subcategory.
+
+Emoji, symbols, and multimodal-like textual cues also complicate hate speech detection. Prior studies have shown that emoji interpretation varies across users and contexts \cite{miller2016blissfully}, and that emojis can support sentiment, emotion, and sarcasm modeling \cite{felbo2017using,shoeb2020emotag1200}. Kirk et al. \cite{kirk2022hatemoji} specifically addressed emoji-based hate through the Hatemoji dataset. Although the present work focuses on sentence-level textual classification, these studies are relevant because they show how hate speech may be encoded indirectly and why models require careful contextual interpretation.
+
+\subsection{Hate Speech Detection in Serbian and Regional Contexts}
+
+Hate speech detection for South Slavic and regional languages has received increasing attention, but remains less resourced than English. Ljubešić et al. \cite{ljubesic2019frenk} introduced the FRENK datasets for socially unacceptable discourse in Slovene and English, while Mandl et al. \cite{mandl2019hasoc} presented the HASOC shared task on hate speech and offensive content identification in Indo-European languages. These efforts illustrate the importance of multilingual and language-specific resources for harmful content detection.
+
+Recent studies have also explored LLM-based hate speech processing in Serbian. Radenković et al. \cite{radenkovic2025large} examined whether LLMs can replace human annotators for hate speech detection in Serbian. Tufegdžić et al. \cite{tufegdzic2025llm} studied LLM-driven hate speech detection in news content extracted from URLs, while Dodović et al. \cite{dodovic2025toxic} investigated automatic hate speech rewriting using LLMs. Additional recent work has considered emoji-influenced hate speech detection and classification \cite{tufegdzic2026twostage,dodovic2026comparative,tufegdzic2026impact,dodovic2026emojis}. Our study builds on this line of research by focusing on sentence-level Serbian hate speech classification and by evaluating whether reasoning-guided prompting improves binary, category-level, and subcategory-level performance.
+
+\subsection{Open-Source Large Language Models}
+
+The use of open-source LLMs is important for reproducibility, cost control, and local deployment in sensitive moderation scenarios. Recent model families such as Llama \cite{grattafiori2024llama}, Qwen \cite{qwen2025qwen3}, Phi \cite{abdin2024phi3,abdin2024phi4}, Gemma \cite{googledeepmind2025gemma3}, Mistral \cite{mistral}, and Granite \cite{mishra2024granite} provide strong general-purpose language capabilities across different model sizes and deployment settings. Tools such as Ollama further simplify local inference with open-source models \cite{marcondes2025using}. In this work, we evaluate multiple open-source LLMs under the same reasoning-guided prompting framework, allowing a direct comparison of their behavior on Serbian hate speech classification.\section{Methodology}
+
+\subsection{Dataset Preparation}
+
+The experiments are conducted on a Serbian hate speech dataset organized at both paragraph and sentence level. The original paragraph-level and sentence-level files are joined using a shared paragraph identifier. Each resulting record contains the paragraph ID, the original paragraph text, a fixed list of manually separated sentences, and sentence-aligned category labels.
+
+A key methodological choice is that no automatic sentence segmentation is performed during inference. Instead, the model receives one predefined sentence at a time. The paragraph text is retained only for grouping and evaluation, but it is not included in the classification prompt. This avoids errors caused by model-generated sentence splitting, such as merging, omitting, reordering, or paraphrasing sentences, and ensures that predictions can be directly aligned with the ground-truth labels.
+
+\subsection{Label Scheme}
+
+Each sentence is assigned a category code from a predefined hate speech taxonomy. The label \texttt{0} denotes the absence of hate speech, while labels \texttt{1}--\texttt{7} represent different hate speech categories. Some categories include more specific subcategories, such as \texttt{1a}, \texttt{1b}, \texttt{3b}, or \texttt{6c}. The main categories cover racial and ethnic hate, religious hate, sex- and gender-based hate, hate based on physical traits or health condition, age-based hate, socioeconomic and political hate, and sports-related hate.
+
+For evaluation, each prediction is considered at three levels:
+
+\begin{itemize}
+    \item \textbf{Binary detection}: whether the sentence contains hate speech or not.
+    \item \textbf{Category classification}: whether the main category code is correct.
+    \item \textbf{Full-code classification}: whether the complete category or subcategory code is correct.
+\end{itemize}
+
+When a sentence contains multiple annotated labels, the first non-zero label is used as the primary evaluation target.
+
+\subsection{Reasoning-Guided Prompting}
+
+The proposed approach uses a reasoning-guided prompt for sentence-level classification. For each sentence, the prompt provides the full category taxonomy and instructs the model to internally follow a structured decision process. The model must first determine whether the sentence expresses, supports, or conveys hate speech toward a protected or social group. It then considers visible linguistic cues such as the target group, irony, quotation, negation, counter-speech, and social or political context. If hate speech is detected, the model selects the most specific applicable category code.
+
+Although the prompt encourages structured reasoning, the model is not allowed to output an explanation. It must return only the final category code after the response marker. This design retains the benefits of reasoning-oriented prompting while producing output that is simple to parse and suitable for automatic evaluation.
+
+\subsection{Model Inference}
+
+All models are evaluated under the same prompting and parsing framework. Each sentence is sent to the model in a separate inference call, and the output is normalized into a single category code. The implementation uses a local Ollama backend, with low-temperature generation to reduce output variability. The maximum output length is restricted because the expected response is only one short category code.
+
+The evaluated models are loaded from a configuration file and include several open-source LLM families, such as Qwen, Mistral, Phi, Granite, Gemma, and Llama. Using the same dataset, prompt format, decoding settings, and output parser for all models allows direct comparison between model families.
+
+\subsection{Evaluation Metrics}
+
+Model performance is evaluated at sentence level. For binary hate speech detection, we compute accuracy, precision, recall, F1-score, balanced accuracy, false positive rate, and false negative rate. For category-level and full-code classification, we compute accuracy and macro-F1 where applicable.
+
+In addition to aggregate metrics, the evaluation records invalid prediction rates, including cases where the model response cannot be parsed into a valid category code. Pairwise model comparisons are performed using McNemar's test, with Holm correction applied to account for multiple comparisons. This allows the analysis to distinguish simple accuracy differences from statistically meaningful differences between models.
+
+\section{Results and Discussion}
+
+The reasoning-guided sentence-level approach was evaluated on 557 sentence instances grouped into 103 paragraph records. Results are reported for three classification levels: binary hate speech detection, main-category classification, and full-code classification including subcategories.
+
+\begin{table*}[t]
+\centering
+\caption{Sentence-level reasoning-guided classification results. Time denotes average inference time per sentence.}
+\label{tab:main_results}
+\small
+\renewcommand{\arraystretch}{1.20}
+\setlength{\tabcolsep}{6pt}
+
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{Valid sen. [\%]} & \textbf{Binary Acc.} & \textbf{Category Acc.} & \textbf{Subcategory Acc.} & \textbf{Time [s]} \\
+\midrule
+Qwen3     & 100.00 & 0.732 & 0.585 & 0.557 & 0.12 \\
+Qwen3.5   & 100.00 & 0.713 & \textbf{0.641} & \textbf{0.634} & 0.42 \\
+Qwen3.6   & 100.00 & 0.745 & 0.630 & 0.614 & 4.09 \\
+Mistral   & 100.00 & 0.713 & 0.542 & 0.499 & 0.06 \\
+Phi-3     & 100.00 & 0.499 & 0.287 & 0.255 & \textbf{0.04} \\
+Phi-4     & 100.00 & \textbf{0.754} & 0.609 & 0.571 & 0.10 \\
+Llama 3   & 100.00 & 0.461 & 0.144 & 0.117 & 0.12 \\
+Llama 4   & 99.82  & 0.746 & 0.554 & 0.493 & 4.34 \\
+Gemma 4   & 100.00 & 0.734 & 0.582 & 0.531 & 0.20 \\
+Granite 4 & 100.00 & 0.470 & 0.147 & 0.118 & 0.08 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:main_results} shows that Phi-4 achieves the highest binary accuracy, reaching 0.754. Llama 4 and Qwen3.6 follow closely, with binary accuracies of 0.746 and 0.745. However, the strongest binary detector is not necessarily the strongest fine-grained classifier. Qwen3.5 obtains the best category accuracy and subcategory accuracy, suggesting that it is more reliable when the task requires assigning the correct hate speech type.
+
+The decrease from binary accuracy to category and subcategory accuracy is visible for all models. This confirms that fine-grained hate speech classification is more difficult than binary detection, since the model must identify not only whether hate speech is present, but also the correct target category or subcategory. The Qwen models perform best on this more detailed classification task.
+
+\begin{table}[t]
+\centering
+\caption{Binary detection behavior of the evaluated models.}
+\label{tab:error_analysis}
+\small
+\renewcommand{\arraystretch}{1.20}
+\setlength{\tabcolsep}{4pt}
+
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} & \textbf{FNR} \\
+\midrule
+Qwen3     & 0.694 & 0.549 & 0.613 & 0.152 & 0.451 \\
+Qwen3.5   & \textbf{0.816} & 0.330 & 0.470 & \textbf{0.047} & 0.670 \\
+Qwen3.6   & 0.783 & 0.470 & 0.587 & 0.082 & 0.530 \\
+Mistral   & 0.627 & 0.633 & 0.630 & 0.237 & 0.367 \\
+Phi-3     & 0.409 & 0.670 & 0.508 & 0.608 & 0.330 \\
+Phi-4     & 0.679 & 0.688 & 0.684 & 0.205 & 0.312 \\
+Llama 3   & 0.417 & \textbf{0.986} & 0.586 & 0.868 & \textbf{0.014} \\
+Llama 4   & 0.658 & 0.716 & 0.686 & 0.235 & 0.284 \\
+Gemma 4   & 0.623 & 0.791 & \textbf{0.697} & 0.301 & 0.209 \\
+Granite 4 & 0.420 & 0.972 & 0.586 & 0.845 & 0.028 \\
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+Here, FPR denotes the false positive rate, while FNR denotes the false negative rate. Table~\ref{tab:error_analysis} provides a detailed overview of the binary detection behavior of each model, revealing substantial differences in precision, recall, and error tendencies. Qwen3.5 is the most conservative model: it has the highest precision and the lowest false positive rate, but also the highest false negative rate. This means that it avoids incorrectly flagging neutral sentences, but misses many hateful ones.
+
+In contrast, Llama 3 and Granite 4 achieve very high recall and very low false negative rates, but their false positive rates are extremely high. These models tend to over-detect hate speech, which can be problematic in moderation scenarios. Gemma 4 achieves the highest binary F1-score, indicating the best balance between precision and recall.
+
+Overall, reasoning-guided prompting produces valid and structured outputs across most evaluated open-source LLMs. Qwen3.5 is the strongest option for fine-grained categorization, Phi-4 offers the best trade-off between accuracy and inference time, and Gemma 4 performs best when balanced binary detection is the primary goal.
+
+\section{Conclusion}
+
+This paper investigated reasoning-guided prompting for sentence-level hate speech classification in Serbian. The proposed approach instructs large language models to internally follow a structured decision process while returning only a final category code, making the output simple to parse and suitable for automatic evaluation.
+
+The results show that reasoning-guided prompting can produce valid and useful classifications across several open-source LLMs, but model performance varies substantially. Phi-4 achieved the best binary accuracy, Qwen3.5 performed best on category and subcategory classification, and Gemma 4 provided the strongest balance between precision and recall. These findings suggest that model selection should depend on the intended use case: conservative detection, balanced binary classification, or fine-grained hate speech categorization.
+
+The experiments also confirm that fine-grained hate speech classification is more difficult than binary detection. While several models can identify hateful content with reasonable accuracy, assigning the correct hate speech category or subcategory remains challenging. Future work should evaluate larger datasets, compare reasoning-guided prompting with standard prompting, and explore ensemble or hybrid approaches that combine the strengths of different models.
+
+\section*{Acknowledgment}
+
+The research was partially conducted in the premises of the Palace of Science, Miodrag Kostić Endowment - Centre for Applied Artificial Intelligence.
+
+\small
+\bibliographystyle{plain}
+\bibliography{literature}
+
+\end{document}
