@@ -37,7 +37,7 @@ marko.misic, drazen.draskovic\}@etf.bg.ac.rs
 %\thispagestyle{empty}
 
 \begin{abstract}{Abstract}
-Hate speech detection in low-resource languages remains challenging due to limited annotated datasets, language-specific context, and the difficulty of distinguishing hateful content from offensive, ambiguous, quoted, or counter-speech expressions. This paper investigates reasoning-guided prompting for sentence-level hate speech classification in Serbian using open-source large language models. The proposed approach instructs models to internally follow a structured decision process based on hate speech definitions, target groups, linguistic cues, and contextual factors, while returning only a final category code suitable for automatic evaluation. The models are evaluated on binary hate speech detection, main-category classification, and fine-grained subcategory classification. Experimental results show that reasoning-guided prompting produces valid and structured outputs across different model families, but performance varies substantially depending on the task. Phi-4 achieves the highest binary accuracy, Qwen3.5 obtains the best category and subcategory accuracy, and Gemma 4 provides the strongest balance between precision and recall. The results confirm that fine-grained hate speech classification is considerably more difficult than binary detection and that strong binary performance does not necessarily imply reliable categorization. These findings highlight the importance of task-specific model selection and reasoning-guided evaluation for hate speech classification in low-resource language settings.
+Hate speech detection in low-resource languages remains challenging due to limited annotated datasets, language-specific context, and the difficulty of distinguishing hateful content from offensive, ambiguous, quoted, or counter-speech expressions. This paper investigates reasoning-guided prompting for sentence-level hate speech classification in Serbian using open-source large language models. The proposed approach instructs models to internally follow a structured decision process based on hate speech definitions, target groups, linguistic cues, and contextual factors, while returning only a final category code suitable for automatic evaluation. The models are evaluated on binary hate speech detection, main-category classification, and fine-grained subcategory classification. Experimental results show that reasoning-guided prompting produces valid and structured outputs across different model families, but performance varies substantially depending on the task. Phi-4 has the highest observed binary accuracy, Qwen3.5 has the highest observed category and subcategory accuracy, and Gemma 4 provides the highest observed binary F1-score. Holm-corrected pairwise tests show that the leading binary models are not statistically distinguishable, whereas Qwen3.5 significantly outperforms most models in fine-grained classification. The results confirm that fine-grained hate speech classification is considerably more difficult than binary detection and that strong binary performance does not necessarily imply reliable categorization. These findings highlight the importance of task-specific model selection and reasoning-guided evaluation for hate speech classification in low-resource language settings.
 \end{abstract}
 
 \section{Introduction}
@@ -82,6 +82,8 @@ Hate speech detection for South Slavic and regional languages has received incre
 
 Recent studies have also explored LLM-based hate speech processing in Serbian. Radenković et al. \cite{radenkovic2025large} examined whether LLMs can replace human annotators for hate speech detection in Serbian. Tufegdžić et al. \cite{tufegdzic2025llm} studied LLM-driven hate speech detection in news content extracted from URLs, while Dodović et al. \cite{dodovic2025toxic} investigated automatic hate speech rewriting using LLMs. Additional recent work has considered emoji-influenced hate speech detection and classification \cite{tufegdzic2026twostage,dodovic2026comparative,tufegdzic2026impact,dodovic2026emojis}. Our study builds on this line of research by focusing on sentence-level Serbian hate speech classification and by evaluating whether reasoning-guided prompting improves binary, category-level, and subcategory-level performance.
 
+The most directly relevant Serbian benchmark is the recent study by Dodović et al. \cite{dodovic2026access}, which compares locally deployed open-source LLMs with a fine-tuned BERTić encoder, the publicly available FRENK-BERTić classifier, and a general-purpose proprietary LLM. On its held-out Serbian test set, the study reports that a two-stage zero-shot Llama pipeline attains 0.867 binary accuracy and 0.875 F1, while fine-tuned BERTić reaches 0.783 accuracy and 0.770 F1. These results provide useful reference points for interpreting the relative performance of the reasoning-guided models evaluated here.
+
 \subsection{Open-Source Large Language Models}
 
 The use of open-source LLMs is important for reproducibility, cost control, and local deployment in sensitive moderation scenarios. Recent model families such as Llama \cite{grattafiori2024llama}, Qwen \cite{qwen2025qwen3}, Phi \cite{abdin2024phi3,abdin2024phi4}, Gemma \cite{googledeepmind2025gemma3}, Mistral \cite{mistral}, and Granite \cite{mishra2024granite} provide strong general-purpose language capabilities across different model sizes and deployment settings. Tools such as Ollama further simplify local inference with open-source models \cite{marcondes2025using}. In this work, we evaluate multiple open-source LLMs under the same reasoning-guided prompting framework, allowing a direct comparison of their behavior on Serbian hate speech classification.\section{Methodology}
@@ -122,7 +124,7 @@ The evaluated models are loaded from a configuration file and include several op
 
 Model performance is evaluated at sentence level. For binary hate speech detection, we compute accuracy, precision, recall, F1-score, balanced accuracy, false positive rate, and false negative rate. For category-level and full-code classification, we compute accuracy and macro-F1 where applicable.
 
-In addition to aggregate metrics, the evaluation records invalid prediction rates, including cases where the model response cannot be parsed into a valid category code. Pairwise model comparisons are performed using McNemar's test, with Holm correction applied to account for multiple comparisons. This allows the analysis to distinguish simple accuracy differences from statistically meaningful differences between models.
+In addition to aggregate metrics, the evaluation records invalid prediction rates, including cases where the model response cannot be parsed into a valid category code. At each evaluation level, every prediction is reduced to a correct/incorrect outcome and all 45 model pairs are compared using the two-sided exact McNemar test \cite{mcnemar1947note}. Only sentences with valid predictions from both models in a pair are included; consequently, comparisons involving Llama 4 use 556 paired sentences and all other comparisons use 557. Holm's sequential correction \cite{holm1979simple} is applied jointly to the resulting 135 hypotheses (45 pairs at each of three evaluation levels), and adjusted $p<0.05$ is considered statistically significant. This analysis distinguishes simple accuracy differences from statistically supported differences while controlling the family-wise error rate.
 
 \section{Results and Discussion}
 
@@ -154,7 +156,7 @@ Granite 4 & 100.00 & 0.470 & 0.147 & 0.118 & 0.08 \\
 \end{tabular}
 \end{table*}
 
-Table~\ref{tab:main_results} shows that Phi-4 achieves the highest binary accuracy, reaching 0.754. Llama 4 and Qwen3.6 follow closely, with binary accuracies of 0.746 and 0.745. However, the strongest binary detector is not necessarily the strongest fine-grained classifier. Qwen3.5 obtains the best category accuracy and subcategory accuracy, suggesting that it is more reliable when the task requires assigning the correct hate speech type.
+Table~\ref{tab:main_results} shows that Phi-4 has the highest observed binary accuracy, reaching 0.754. Llama 4 and Qwen3.6 follow closely, with binary accuracies of 0.746 and 0.745. However, the strongest binary point estimate does not necessarily identify the strongest fine-grained classifier. Qwen3.5 obtains the highest observed category and subcategory accuracies, suggesting that it is more reliable when the task requires assigning the correct hate speech type; the statistical uncertainty around these rankings is examined below.
 
 The decrease from binary accuracy to category and subcategory accuracy is visible for all models. This confirms that fine-grained hate speech classification is more difficult than binary detection, since the model must identify not only whether hate speech is present, but also the correct target category or subcategory. The Qwen models perform best on this more detailed classification task.
 
@@ -187,15 +189,81 @@ Granite 4 & 0.420 & 0.972 & 0.586 & 0.845 & 0.028 \\
 
 Here, FPR denotes the false positive rate, while FNR denotes the false negative rate. Table~\ref{tab:error_analysis} provides a detailed overview of the binary detection behavior of each model, revealing substantial differences in precision, recall, and error tendencies. Qwen3.5 is the most conservative model: it has the highest precision and the lowest false positive rate, but also the highest false negative rate. This means that it avoids incorrectly flagging neutral sentences, but misses many hateful ones.
 
-In contrast, Llama 3 and Granite 4 achieve very high recall and very low false negative rates, but their false positive rates are extremely high. These models tend to over-detect hate speech, which can be problematic in moderation scenarios. Gemma 4 achieves the highest binary F1-score, indicating the best balance between precision and recall.
+In contrast, Llama 3 and Granite 4 achieve very high recall and very low false negative rates, but their false positive rates are extremely high. These models tend to over-detect hate speech, which can be problematic in moderation scenarios. Gemma 4 achieves the highest observed binary F1-score, indicating the best empirical balance between precision and recall in this experiment.
 
-Overall, reasoning-guided prompting produces valid and structured outputs across most evaluated open-source LLMs. Qwen3.5 is the strongest option for fine-grained categorization, Phi-4 offers the best trade-off between accuracy and inference time, and Gemma 4 performs best when balanced binary detection is the primary goal.
+\subsection{Pairwise Statistical Comparisons}
+
+Table~\ref{tab:mcnemar_matrix} presents the complete significance pattern obtained from the exact pairwise McNemar tests after Holm correction. Of the 45 pairwise comparisons at each evaluation level, 21 are significant for binary detection, 30 for category classification, and 36 for full-code classification. The increasing number of significant differences at finer granularity indicates that model choice has a greater effect when the output taxonomy becomes more detailed.
+
+\begin{table*}[t]
+\centering
+\caption{Pairwise exact McNemar test results after Holm correction.}
+\label{tab:mcnemar_matrix}
+\normalsize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lcccccccccc}
+\toprule
+ & \textbf{Q3} & \textbf{Q3.5} & \textbf{Q3.6} & \textbf{Mis.} & \textbf{P3} & \textbf{P4} & \textbf{Gr4} & \textbf{Ge4} & \textbf{Ll3} & \textbf{Ll4} \\
+\midrule
+Qwen3     &       & CF    & F     & F     & BCF   & --    & BCF   & --    & BCF   & F   \\
+Qwen3.5   &       &       & --    & CF    & BCF   & F     & BCF   & F     & BCF   & CF  \\
+Qwen3.6   &       &       &       & CF    & BCF   & --    & BCF   & F     & BCF   & CF  \\
+Mistral   &       &       &       &       & BCF   & CF    & BCF   & --    & BCF   & --  \\
+Phi-3     &       &       &       &       &       & BCF   & CF    & BCF   & CF    & BCF \\
+Phi-4     &       &       &       &       &       &       & BCF   & --    & BCF   & CF  \\
+Granite 4 &       &       &       &       &       &       &       & BCF   & --    & BCF \\
+Gemma 4   &       &       &       &       &       &       &       &       & BCF   & --  \\
+Llama 3   &       &       &       &       &       &       &       &       &       & BCF \\
+Llama 4   &       &       &       &       &       &       &       &       &       &     \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+
+\begin{minipage}{0.98\textwidth}
+\footnotesize
+\textit{Note:} Holm correction was applied jointly across all 135 exact McNemar tests. B, C, and F denote statistically significant differences for binary, category, and full-code classification, respectively; ``--'' denotes no significant difference at any level. The direction of each difference follows the accuracies in Table~\ref{tab:main_results}.
+\end{minipage}
+\end{table*}
+
+For binary detection, the three small observed gaps between Phi-4 and its closest competitors are not statistically significant: Qwen3.6 ($p_{\mathrm{Holm}}=1.000$), Llama 4 ($p_{\mathrm{Holm}}=1.000$), and Gemma 4 ($p_{\mathrm{Holm}}=1.000$). Phi-4 is significantly more accurate than Phi-3 ($p_{\mathrm{Holm}}=3.14\times10^{-16}$), Granite 4 ($p_{\mathrm{Holm}}=8.51\times10^{-20}$), and Llama 3 ($p_{\mathrm{Holm}}=1.99\times10^{-20}$), but not than the other models. Thus, Phi-4 has the highest point estimate, but the experiment does not establish a unique best model among the leading binary detectors.
+
+At the category level, Qwen3.5 significantly outperforms Qwen3, Mistral, Phi-3, Granite 4, Llama 3, and Llama 4 (all Holm-adjusted $p\leq0.0083$), whereas its differences from Qwen3.6, Phi-4, and Gemma 4 are not significant. At the full-code level, Qwen3.5 significantly outperforms every model except Qwen3.6: its closest significant comparison is with Phi-4 ($p_{\mathrm{Holm}}=0.0250$), while the comparison with Qwen3.6 is not significant ($p_{\mathrm{Holm}}=1.000$). The statistical tests therefore support the advantage of the Qwen3.5/Qwen3.6 family for fine-grained classification, while also showing that their small difference from each other cannot be resolved on this sample.
+
+\subsection{Comparison with Serbian Benchmarks}
+
+Table~\ref{tab:serbian_benchmarks} places the present binary results on 557 sentences alongside strong Serbian and BCMS-oriented baselines reported by Dodović et al. \cite{dodovic2026access} on a separate held-out set of 548 sentences. Phi-4, the most accurate model in the present experiment, remains below the two-stage zero-shot Llama and Qwen systems and the supervised BERTić baseline, but exceeds the off-the-shelf FRENK-BERTić classifier. Gemma 4 similarly provides a better F1-score than FRENK-BERTić, although it remains below the other three reference systems.
+
+\begin{table}[t]
+\centering
+\caption{Comparison with reported Serbian/BCMS hate speech detection baselines. Results from different studies use different held-out samples and are therefore contextual benchmarks rather than direct paired comparisons.}
+\label{tab:serbian_benchmarks}
+\small
+\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Approach} & \textbf{Accuracy} & \textbf{F1} \\
+\midrule
+Phi-4, reasoning-guided       & 0.754 & 0.684 \\
+Gemma 4, reasoning-guided     & 0.734 & 0.697 \\
+Two-stage zero-shot Llama \cite{dodovic2026access} & \textbf{0.867} & \textbf{0.875} \\
+Two-stage zero-shot Qwen \cite{dodovic2026access}  & 0.820 & 0.784 \\
+Fine-tuned BERTić \cite{dodovic2026access}        & 0.783 & 0.770 \\
+FRENK-BERTić \cite{dodovic2026access}             & 0.642 & 0.625 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The comparison indicates that the present single-pass reasoning-guided approach is competitive with the available off-the-shelf Serbian classifier, but does not reach the best reported two-stage or supervised binary results. For fine-grained prediction, the current Qwen3.5 accuracies of 0.641 at category level and 0.634 at full-code level exceed the zero-shot two-stage Qwen category accuracy of 0.556 and its reported subcategory accuracy of 0.521, respectively, but remain below the few-shot Qwen results of 0.909 and 0.817 reported in \cite{dodovic2026access}. These fine-grained figures are only indicative because that study evaluates category and subcategory outputs on different conditional subsets, whereas the present work scores every valid sentence at both levels. A formal claim of superiority would therefore require evaluation on an identical test set with identical denominators.
+
+Overall, reasoning-guided prompting produces valid and structured outputs across most evaluated open-source LLMs. Qwen3.5 has the highest fine-grained point estimates, Phi-4 combines the highest binary accuracy point estimate with low inference time, and Gemma 4 has the highest observed binary F1-score. The nonsignificant differences among several leading models should be considered when selecting a deployment model.
 
 \section{Conclusion}
 
 This paper investigated reasoning-guided prompting for sentence-level hate speech classification in Serbian. The proposed approach instructs large language models to internally follow a structured decision process while returning only a final category code, making the output simple to parse and suitable for automatic evaluation.
 
-The results show that reasoning-guided prompting can produce valid and useful classifications across several open-source LLMs, but model performance varies substantially. Phi-4 achieved the best binary accuracy, Qwen3.5 performed best on category and subcategory classification, and Gemma 4 provided the strongest balance between precision and recall. These findings suggest that model selection should depend on the intended use case: conservative detection, balanced binary classification, or fine-grained hate speech categorization.
+The results show that reasoning-guided prompting can produce valid and useful classifications across several open-source LLMs, but model performance varies substantially. Phi-4 achieved the highest observed binary accuracy, Qwen3.5 achieved the highest observed category and subcategory accuracies, and Gemma 4 provided the highest observed binary F1-score. Exact McNemar tests with Holm correction show that Phi-4 is not statistically distinguishable from the other leading binary models, while Qwen3.5 significantly outperforms most, but not all, competitors on the fine-grained tasks. These findings suggest that model selection should depend on the intended use case: conservative detection, balanced binary classification, or fine-grained hate speech categorization.
 
 The experiments also confirm that fine-grained hate speech classification is more difficult than binary detection. While several models can identify hateful content with reasonable accuracy, assigning the correct hate speech category or subcategory remains challenging. Future work should evaluate larger datasets, compare reasoning-guided prompting with standard prompting, and explore ensemble or hybrid approaches that combine the strengths of different models.
 
