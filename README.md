@@ -9,6 +9,8 @@ Code, data and results for the paper:
 
 The study classifies Serbian sentences into a hate speech taxonomy of 7 categories and 14 codes. It uses ten open LLMs, all run locally through [Ollama](https://ollama.com). The prompt tells the model to work through a structured decision process internally: target group, irony, quotation, negation, counter-speech and context. The model then returns only the final category code, so every response can be parsed and scored automatically.
 
+> **About the name:** the repository and script names say "CoT" (chain of thought), but the model does not write out a chain of thought. The prompt ([src/prompts/classify_sentence_cot.txt](src/prompts/classify_sentence_cot.txt)) lists five decision steps and tells the model to apply them internally and not to show its reasoning. Output is limited to 16 tokens and Ollama `think` is disabled, so the model returns only the category code. The paper therefore calls the method reasoning-guided prompting.
+
 > **Content warning:** the data contains real hateful and offensive language in Serbian.
 
 ## Method
