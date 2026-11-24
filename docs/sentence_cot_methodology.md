@@ -33,4 +33,4 @@ Input/output paths are hardcoded relative to the repository, and every model in 
 
 The inference run writes `Metrics` and `PerSentence`; `RawOutputs` is included only with `--save-raw`. Statistics are deliberately calculated afterward by `sentence_cot_statistics.py`, which reads the completed `PerSentence` sheet without calling any models. It writes a separate workbook containing `Summary`, `Statistics`, and `McNemar` sheets.
 
-The old `full_text_run.py` and sentence baselines remain available for comparison.
+The earlier paragraph-splitting baseline (`full_text_run.py`) and the single-sentence baselines live in the [HateSpeech-LLM-Detector](https://github.com/mdodovic/HateSpeech-LLM-Detector) repository.
